@@ -1,0 +1,58 @@
+html, body {
+	height: 100%;
+	background: #efefef;
+}
+
+pre.teaser {
+	position: relative;
+	margin: 0 auto;
+	padding: 1em;
+	top: 50%;
+	-webkit-transform: translateY(-50%);
+	-moz-transform: translateY(-50%);
+	-ms-transform: translateY(-50%);
+	-o-transform: translateY(-50%);
+	transform: translateY(-50%);
+	background: #f8f8f8;
+	border: 1px solid #ccc; 
+
+	-webkit-animation: fadein 1s; /* Safari and Chrome */
+	-moz-animation: fadein 1s; /* Firefox */
+	-ms-animation: fadein 1s; /* Internet Explorer */
+	-o-animation: fadein 1s; /* Opera */
+	animation: fadein 1s;
+
+	tab-size: 4;
+	white-space: pre-wrap;
+}
+
+@media only screen and (min-width: 900px) {
+	pre.teaser {
+		width: 780px;
+	}
+}
+
+@keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@-moz-keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@-webkit-keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+@-ms-keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}​
+
+@-o-keyframes fadein {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
