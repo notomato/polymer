@@ -30,7 +30,7 @@ Transform data going into/coming out of bound business logic. May be implemented
 
 The App class is the root of an API build with Polymer. The `namespace` option is used to determine the root URL. A namespace is not required, but is recommended:
 
-```
+```php
 <?php
 
 $app = new polymer\App(['namespace' => 'v1']);
@@ -47,7 +47,7 @@ The `endpoint` method is used to declare API endpoints. The `name` parameter spe
 
 Those famililar with angular-router will be familiar with the similar style of creating 'states', along with the 'abstract' option.
 
-```
+```php
 <?php
 
 /**
