@@ -31,8 +31,12 @@ Transform data going into/coming out of bound business logic. May be implemented
 The App class is the root of an API build with Polymer. The `namespace` option is used to determine the root URL. A namespace is not required, but is recommended:
 
 ```
+<?php
+
 $app = new polymer\App(['namespace' => 'v1']);
 echo $app->run();
+
+?>
 ```
 
 This root endpoint is published at `/v1`.
@@ -44,9 +48,10 @@ The `endpoint` method is used to declare API endpoints. The `name` parameter spe
 Those famililar with angular-router will be familiar with the similar style of creating 'states', along with the 'abstract' option.
 
 ```
+<?php
 
 /**
- * Create a common 'abstract' endpoint that is bound to the 'widgets' model, but not directly reachable.
+ * Create a common 'abstract' endpoint that is bound to the 'widgets' model.
  */
 $app->endpoint('widgets', [
 	'abstract' => true,
@@ -56,7 +61,8 @@ $app->endpoint('widgets', [
 ]);
 
 /**
- * Create an 'index' endpoint that inherits from the abstract state, published at '/widgets'.
+ * Create an 'index' endpoint that inherits from the abstract state, published
+ * at '/widgets'.
  *
  * The 'class' binding option is merged with the 'method' option.
  */
@@ -67,9 +73,11 @@ $app->endpoint('widgets.index', [
 ]);
 
 /**
- * The 'view' endpoint also inherits from the abstract state, with merged 'method' and 'params' options.
+ * The 'view' endpoint also inherits from the abstract state, with merged
+ * 'method' and 'params' options.
  *
- * The 'params' configuration can use variable substitution to apply parameters based on the URL
+ * The 'params' configuration can use variable substitution to apply parameters
+ * based on the URL
  */
 $app->endpoint('widgets.view', [
 	'url' => '/:widgetId',
@@ -93,6 +101,8 @@ $app->endpoint('widgets.view.gizmos', [
 		'params' => [ 'widget' => 'url:widgetId' ]
 	]
 ]);
+
+?>
 ```
 
 ### Specify Media Types
