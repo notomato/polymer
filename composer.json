@@ -14,5 +14,8 @@
     "require-dev": {
         "crysalead/kahlan": "dev-master#4df8406f446ab60b226321ce6ff3071a871986c0"
     },
-	"minimum-stability": "dev"
+	"minimum-stability": "dev",
+	"autoload": {
+		"psr-0": { "polymer\\": "src/" }
+	}
 }
