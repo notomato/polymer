@@ -76,6 +76,9 @@ $app->endpoint('widgets.index', [
  * The 'view' endpoint also inherits from the abstract state, with merged
  * 'method' and 'params' options.
  *
+ * The 'url' is appended to the chain of parent endpoints, resulting in a full
+ * URL of '/v1/widgets/:id'
+ *
  * The 'params' configuration can use variable substitution to apply parameters
  * based on the URL
  */
@@ -92,6 +95,8 @@ $app->endpoint('widgets.view', [
  *
  * It is possible to bind to a different class and method than the parent
  * Endpoint, but still inherit variables from it.
+ *
+ * This endpoint is published at `/v1/widgets/:id/gizmos`
  */
 $app->endpoint('widgets.view.gizmos', [
 	'url' => '/gizmos',
