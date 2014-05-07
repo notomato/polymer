@@ -6,12 +6,20 @@ use lithium\net\http\Router;
 use lithium\action\Request;
 use lithium\action\Response;
 use lithium\action\Dispatcher;
+use lithium\core\ConfigException;
+
+use polymer\action\Endpoint;
 
 class App extends \lithium\core\Object {
 
 	protected $_autoConfig = [
 		'namespace'
 	];
+
+	/**
+	 * A cache of Endpoints that are direct children of the root
+	 */
+	protected $_children = [];
 
 	/**
 	 * Namespace of this App. It is used to build the root URL. All Endpoints 
@@ -28,32 +36,47 @@ class App extends \lithium\core\Object {
 	public function __construct(array $config = []) {
 		parent::__construct($config);
 
-		$this->connect();
-	}
-	/**
-	 * Get the App's root URL. Consists of the namespace preceeded by a forward slash.
-	 */
-	public function getUrl() {
-		return '/' . $this->_namespace;
+		$this->_connect();
 	}
 
 	/**
-	 * Connect the root URL using the li3 Router
+	 * Get the full URL of the Endpoint named `$endpoint` if given, otherwise get the App's 
+	 * root URL.
+	 */
+	public function url($endpoint = null) {
+		if (!$endpoint) {
+			return '/' . $this->_namespace;
+		}
+
+		$url = $this->_namespace ? $this->url() : '';
+
+		foreach($this->_children as $name => $child) {
+			if ($name === $endpoint->config('name')) {
+				return $url . $endpoint->url();
+			}
+		}
+	}
+
+	/**
+	 * Connect the root URL or Endpoint URL using the li3 Router.
 	 *
 	 * @todo: Support li3-style DI
 	 */
-	public function connect() {
-		Router::connect($this->getUrl(), [], [$this, 'respond']);
+	protected function _connect($endpoint = null) {
+		$callee = $endpoint ?: $this;
+		Router::connect($this->url($endpoint), [], function($request) use ($callee) {
+			return new Response($callee->respond($request));
+		});
 	}
 
 	/**
-	 * Return a Response that can be handled by the li3 Router
+	 * Return an array that can be used to construct an instance of `lithium\action\Response`
 	 */
-	public static function respond($request = null) {
-		return new Response([
+	public function respond($request = null) {
+		return [
 			'code' => 200,
 			'body' => "Hello World!"
-		]);
+		];
 	}
 
 	/**
@@ -62,6 +85,42 @@ class App extends \lithium\core\Object {
 	public function run() {
 		$request = new Request();
 		return Dispatcher::run($request);
+	}
+
+	/**
+	 * Create an Endpoint
+	 */
+	public function endpoint(array $options) {
+		$defaults = [
+			'abstract' => false
+		];
+		$options += $defaults;
+
+		if(!isset($options['name'])) {
+			throw new ConfigException("Endpoint name required");
+		}
+
+		$name = $options['name'];
+		if (isset($this->_children[$name])) {
+			throw new ConfigException("Endpoint `$name` already defined");
+		}
+
+		$endpoint = new Endpoint($options);
+
+		$this->_children[$name] = $endpoint;
+
+		if ($options['abstract'] === false) {
+			$this->_connect($endpoint);
+		}
+
+		return $endpoint;
+	}
+
+	/**
+	 * Return a list of Endpoints that are direct children
+	 */
+	public function children() {
+		return $this->_children;
 	}
 }
 
