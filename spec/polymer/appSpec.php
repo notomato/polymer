@@ -56,7 +56,7 @@ describe("app", function() {
 			expect($url)->toEqual('/');
 
 			$app = new App(['namespace' => 'v1']);
-			$url = $this->app->url();
+			$url = $app->url();
 			expect($url)->toEqual('/v1');
 		});
 	});
