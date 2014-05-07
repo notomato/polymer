@@ -45,6 +45,18 @@ describe("endpoint", function() {
 			expect($endpoint->url())->toEqual('/test');
 		});
 	});
+
+	describe("response", function() {
+		it("should respond", function() {
+			$endpoint = new Endpoint([ 'name' => 'test', ]);
+			$response = $endpoint->respond();
+
+			expect($response)->toEqual([
+				'code' => 200,
+				'body' => "Hello from test!"
+			]);
+		});
+	});
 });
 
 ?>
