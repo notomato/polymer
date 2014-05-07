@@ -30,6 +30,13 @@ describe("endpoint", function() {
 			]);
 
 			expect($endpoint->url())->toEqual('/some-alias');
+
+			$endpoint = new Endpoint([
+				'name' => 'test',
+				'url' => '/some-alias'
+			]);
+
+			expect($endpoint->url())->toEqual('/some-alias');
 		});
 
 		it("should use `name` if `url` is not set", function() {

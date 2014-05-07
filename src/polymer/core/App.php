@@ -48,13 +48,12 @@ class App extends \lithium\core\Object {
 			return '/' . $this->_namespace;
 		}
 
-		$url = $this->_namespace ? $this->url() : '';
+		$initial = $this->_namespace ? $this->url() : '';
+		$chain = $this->traverse($endpoint->config('name'));
 
-		foreach($this->_children as $name => $child) {
-			if ($name === $endpoint->config('name')) {
-				return $url . $endpoint->url();
-			}
-		}
+		return array_reduce(array_reverse($chain), function($url, $endpoint) {
+			return $url . $endpoint->url();
+		}, $initial);
 	}
 
 	/**
@@ -121,6 +120,23 @@ class App extends \lithium\core\Object {
 	 */
 	public function children() {
 		return $this->_children;
+	}
+
+	/**
+	 * Return the inheritance chain for the given endpoint name
+	 */
+	public function traverse($name) {
+		$chain = [ $this->_children[$name] ];
+
+		$pos = strrpos($name, '.');
+
+		if ($pos === false) {
+			return $chain;
+		}
+
+		$parent = substr($name, 0, $pos);
+
+		return array_merge($chain, $this->traverse($parent));
 	}
 }
 

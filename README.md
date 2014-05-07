@@ -67,6 +67,7 @@ $app->endpoint('widgets', [
  * The 'class' binding option is merged with the 'method' option.
  */
 $app->endpoint('widgets.index', [
+	'url' => '',
 	'binding' => [
 		'method' => 'all',
 	]
@@ -77,13 +78,13 @@ $app->endpoint('widgets.index', [
  * 'method' and 'params' options.
  *
  * The 'url' is appended to the chain of parent endpoints, resulting in a full
- * URL of '/v1/widgets/:id'
+ * URL of '/v1/widgets/{:id}'
  *
  * The 'params' configuration can use variable substitution to apply parameters
  * based on the URL
  */
 $app->endpoint('widgets.view', [
-	'url' => '/:widgetId',
+	'url' => '/{:widgetId}',
 	'binding' => [
 		'method' => 'first',
 		'params' => [ '_id' => 'url:widgetId' ]

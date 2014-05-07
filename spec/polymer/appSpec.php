@@ -124,7 +124,25 @@ describe("app", function() {
 
 			$this->app->endpoint([
 				'name' => 'widgets',
-				'abstract'  => true
+				'abstract' => true
+			]);
+		});
+
+		it("should connect inherited endpoints", function() {
+			expect($this->router)->toReceive('::connect')->with('/v1/widgets');
+			expect($this->router)->toReceive('::connect')->with('/v1/widgets/{:id}');
+
+			$this->app->endpoint([
+				'name' => 'widgets',
+				'abstract' => true
+			]);
+			$this->app->endpoint([
+				'name' => 'widgets.index',
+				'url' => ''
+			]);
+			$this->app->endpoint([
+				'name' => 'widgets.view',
+				'url' => '/{:id}'
 			]);
 		});
 
@@ -144,6 +162,28 @@ describe("app", function() {
 
 			expect($children)->toHaveLength(2);
 			expect($children['gizmos'])->toBe($gizmos);
+		});
+
+		it("should traverse the inheritance chain", function() {
+			$widgets = $this->app->endpoint([
+				'name' => 'widgets',
+				'abstract' => true
+			]);
+			$widgetsIndex = $this->app->endpoint(['name' => 'widgets.index']);
+			$widgetsView = $this->app->endpoint(['name' => 'widgets.view']);
+			$widgetsViewGizmos = $this->app->endpoint(['name' => 'widgets.view.gizmos']);
+
+			$chain = $this->app->traverse('widgets');
+			expect($chain)->toEqual([ $widgets ]);
+
+			$chain = $this->app->traverse('widgets.index');
+			expect($chain)->toEqual([ $widgetsIndex, $widgets ]);
+
+			$chain = $this->app->traverse('widgets.view');
+			expect($chain)->toEqual([ $widgetsView, $widgets ]);
+
+			$chain = $this->app->traverse('widgets.view.gizmos');
+			expect($chain)->toEqual([ $widgetsViewGizmos, $widgetsView, $widgets ]);
 		});
 	});
 });

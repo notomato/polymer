@@ -16,7 +16,20 @@ class Endpoint extends \lithium\core\Object {
 	protected $_url;
 
 	public function url() {
-		return '/' . ($this->_url ?: $this->_name);
+		if ($this->_url === null) {
+			return '/' . $this->_name;
+		}
+
+		if ($this->_url === '') {
+			return $this->_url;
+		}
+
+		if ($this->_url[0] === '/') {
+			return $this->_url;
+		}
+
+		return '/' . $this->_url;
+
 	}
 
 	public function config($option = null) {
