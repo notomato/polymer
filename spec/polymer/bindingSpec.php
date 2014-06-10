@@ -26,12 +26,12 @@ describe("binding", function() {
 
 	describe("li3 adapter", function() {
 		it("should call the correct class, model and parameters", function() {
-			$binding = new \polymer\data\binding\Li3();
+			$binding = new \polymer\extensions\adapter\data\binding\Li3();
 			$model = 'spec\polymer\mock\Li3Model';
 			$conditions = [ 'group' => 123 ];
 
 			expect($model)->toReceive('::all')->with(compact('conditions'));
-			$binding->apply($model, 'all', compact('conditions'));
+			$binding->apply($model, 'all', [compact('conditions')]);
 		});
 	});
 });

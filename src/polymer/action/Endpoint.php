@@ -64,7 +64,7 @@ class Endpoint extends \lithium\core\Object {
 		$config = $this->config('binding', true);
 
 		if (!isset($config['params'])) {
-			$config['params'] = null;
+			$config['params'] = [];
 		}
 
 		return $binding->apply($config['class'], $config['method'], $config['params']);
