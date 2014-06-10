@@ -91,7 +91,8 @@ class App extends \lithium\core\Object {
 	 */
 	public function endpoint(array $options) {
 		$defaults = [
-			'abstract' => false
+			'abstract' => false,
+			'app' => $this
 		];
 		$options += $defaults;
 

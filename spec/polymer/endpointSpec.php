@@ -49,6 +49,14 @@ describe("endpoint", function() {
 	});
 
 	describe("response", function() {
+		before(function() {
+			Binding::config([
+				'test' => [
+					'adapter' => Stub::create()
+				]
+			]);
+		});
+
 		it("should throw if responding with no binding", function() {
 			$endpoint = new Endpoint([ 'name' => 'test' ]);
 
@@ -61,11 +69,6 @@ describe("endpoint", function() {
 		});
 
 		it("should invoke a binding with a named adapter", function() {
-			Binding::config([
-				'test' => [
-					'adapter' => Stub::create()
-				]
-			]);
 			$model = 'spec\polymer\mock\Li3Model';
 			$conditions = [
 				'foo' => 'bar'
@@ -83,6 +86,48 @@ describe("endpoint", function() {
 
 			expect(Binding::adapter('test'))->toReceive('apply')->with($model, 'all', compact('conditions'));
 			$endpoint->respond();
+		});
+
+		it("should merge binding parameters when responding", function() {
+			$app = Stub::create();
+
+			$model = 'spec\polymer\mock\Li3Model';
+			$parent = new Endpoint([
+				'app' => $app,
+				'name' => 'test',
+				'abstract' => true,
+				'binding' => [
+					'adapter' => 'test',
+					'class'   => $model,
+				]
+			]);
+
+			$index = new Endpoint([
+				'app' => $app,
+				'name' => 'test.index',
+				'binding' => [
+					'method' => 'all'
+				]
+			]);
+
+			$conditions = [
+				'id' => 100
+			];
+
+			$view = new Endpoint([
+				'app' => $app,
+				'name' => 'test.view',
+				'binding' => [
+					'method' => 'first',
+					'params' => compact('conditions')
+				]
+			]);
+
+			Stub::on($app)->method('traverse')->andReturn([$index, $parent]);
+
+			$binding = Binding::adapter('test');
+			expect($binding)->toReceive('apply')->with($model, 'all');
+			$index->respond();
 		});
 	});
 });

@@ -10,7 +10,8 @@ class Endpoint extends \lithium\core\Object {
 	protected $_autoConfig = [
 		'name',
 		'url',
-		'binding'
+		'binding',
+		'app'
 	];
 
 	protected $_name;
@@ -18,6 +19,8 @@ class Endpoint extends \lithium\core\Object {
 	protected $_url;
 
 	protected $_binding;
+
+	protected $_app;
 
 	protected $_classes = [
 		'binding' => 'polymer\data\Binding'
@@ -40,18 +43,30 @@ class Endpoint extends \lithium\core\Object {
 
 	}
 
-	public function config($option = null) {
+	public function config($option = null, $merge = false) {
 		if (!$option) {
 			return $this->_config;
 		}
 
-		return $this->_config[$option];
+		if ($merge === false || !$this->_app) {
+			return $this->_config[$option];
+		}
+
+		$chain = $this->_app->traverse($this->_name);
+		return array_reduce(array_reverse($chain), function($config, $endpoint) use ($option) {
+			return $config + $endpoint->config($option);
+		}, $this->config($option));
 	}
 
 	public function respond($request = null) {
 		$binding = $this->_binding();
 
-		$config = $this->_binding;
+		$config = $this->config('binding', true);
+
+		if (!isset($config['params'])) {
+			$config['params'] = null;
+		}
+
 		return $binding->apply($config['class'], $config['method'], $config['params']);
 	}
 
@@ -61,7 +76,8 @@ class Endpoint extends \lithium\core\Object {
 		}
 
 		$binding = $this->_instance('binding');
-		$name = isset($this->_binding['adapter']) ? $this->_binding['adapter'] : 'default';
+		$config = $this->config('binding', true);
+		$name = isset($config['adapter']) ? $config['adapter'] : 'default';
 
 		return $binding::adapter($name);
 	}
