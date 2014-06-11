@@ -5,6 +5,7 @@ namespace spec\polymer;
 use kahlan\plugin\Stub;
 use polymer\action\Endpoint;
 use polymer\data\Binding;
+use lithium\action\Request;
 
 describe("endpoint", function() {
 	describe("config getter", function() {
@@ -49,85 +50,124 @@ describe("endpoint", function() {
 	});
 
 	describe("response", function() {
-		before(function() {
+		beforeEach(function() {
 			Binding::config([
 				'test' => [
 					'adapter' => Stub::create()
 				]
 			]);
+
+			$this->request = new Request([
+				'env' => [
+					'HTTP_ACCEPT' => 'application/json'
+				]
+			]);
 		});
 
-		it("should throw if responding with no binding", function() {
-			$endpoint = new Endpoint([ 'name' => 'test' ]);
+		describe("binding", function() {
+			it("should throw if responding with no binding", function() {
+				$endpoint = new Endpoint([ 'name' => 'test' ]);
 
-			$fn = function() use ($endpoint) {
-				$endpoint->respond();
-			};
+				$fn = function() use ($endpoint) {
+					$endpoint->respond($this->request);
+				};
 
-			$message = "Endpoint `test` cannot respond without a binding";
-			expect($fn)->toThrow(new \lithium\action\DispatchException($message));
+				$message = "Endpoint `test` cannot respond without a binding";
+				expect($fn)->toThrow(new \lithium\action\DispatchException($message));
+			});
+
+			it("should invoke a binding with a named adapter", function() {
+				$model = 'spec\polymer\mock\Li3Model';
+				$conditions = [
+					'foo' => 'bar'
+				];
+
+				$endpoint = new Endpoint([
+					'name' => 'test',
+					'binding' => [
+						'adapter' => 'test',
+						'class'   => $model,
+						'method'  => 'all',
+						'params'  => compact('conditions')
+					]
+				]);
+
+				expect(Binding::adapter('test'))->toReceive('apply')->with($model, 'all', compact('conditions'));
+				$endpoint->respond($this->request);
+			});
+
+			it("should merge binding parameters when responding", function() {
+				$app = Stub::create();
+
+				$model = 'spec\polymer\mock\Li3Model';
+				$parent = new Endpoint([
+					'app' => $app,
+					'name' => 'test',
+					'abstract' => true,
+					'binding' => [
+						'adapter' => 'test',
+						'class'   => $model,
+					]
+				]);
+
+				$index = new Endpoint([
+					'app' => $app,
+					'name' => 'test.index',
+					'binding' => [
+						'method' => 'all'
+					]
+				]);
+
+				$conditions = [
+					'id' => 100
+				];
+
+				$view = new Endpoint([
+					'app' => $app,
+					'name' => 'test.view',
+					'binding' => [
+						'method' => 'first',
+						'params' => compact('conditions')
+					]
+				]);
+
+				$binding = Binding::adapter('test');
+				expect($binding)->toReceive('apply')->with($model, 'all');
+				expect($binding)->toReceive('apply')->with($model, 'first', compact('conditions'));
+
+				Stub::on($app)->method('traverse')->andReturn([$index, $parent]);
+				$index->respond($this->request);
+
+				Stub::on($app)->method('traverse')->andReturn([$view, $parent]);
+				$view->respond($this->request);
+			});
 		});
 
-		it("should invoke a binding with a named adapter", function() {
-			$model = 'spec\polymer\mock\Li3Model';
-			$conditions = [
-				'foo' => 'bar'
-			];
+		describe("media type", function() {
+			beforeEach(function() {
+				$binding = Binding::adapter('test');
+				Stub::on($binding)->method('apply')->andReturn(['foo' => 'bar']);
 
-			$endpoint = new Endpoint([
-				'name' => 'test',
-				'binding' => [
-					'adapter' => 'test',
-					'class'   => $model,
-					'method'  => 'all',
-					'params'  => compact('conditions')
-				]
-			]);
+				$this->endpoint = new Endpoint([
+					'name' => 'test.index',
+					'binding' => [
+						'adapter' => 'test',
+						'class'   => 'spec\polymer\mock\Li3Model',
+						'method'  => 'first'
+					]
+				]);
+			});
 
-			expect(Binding::adapter('test'))->toReceive('apply')->with($model, 'all', compact('conditions'));
-			$endpoint->respond();
-		});
+			it("should be an instance of response", function() {
+				$response = $this->endpoint->respond($this->request);
+				expect($response)->toBeAnInstanceOf('lithium\action\Response');
+			});
 
-		it("should merge binding parameters when responding", function() {
-			$app = Stub::create();
-
-			$model = 'spec\polymer\mock\Li3Model';
-			$parent = new Endpoint([
-				'app' => $app,
-				'name' => 'test',
-				'abstract' => true,
-				'binding' => [
-					'adapter' => 'test',
-					'class'   => $model,
-				]
-			]);
-
-			$index = new Endpoint([
-				'app' => $app,
-				'name' => 'test.index',
-				'binding' => [
-					'method' => 'all'
-				]
-			]);
-
-			$conditions = [
-				'id' => 100
-			];
-
-			$view = new Endpoint([
-				'app' => $app,
-				'name' => 'test.view',
-				'binding' => [
-					'method' => 'first',
-					'params' => compact('conditions')
-				]
-			]);
-
-			Stub::on($app)->method('traverse')->andReturn([$index, $parent]);
-
-			$binding = Binding::adapter('test');
-			expect($binding)->toReceive('apply')->with($model, 'all');
-			$index->respond();
+			it("should negotiate encoding by Accept header", function() {
+				$response = $this->endpoint->respond($this->request);
+				expect($response->headers('Content-Type'))->toEqual('application/json; charset=UTF-8');
+				expect($response->body())->toEqual('{"foo":"bar"}');
+			});
 		});
 	});
 });

@@ -23,7 +23,9 @@ class Endpoint extends \lithium\core\Object {
 	protected $_app;
 
 	protected $_classes = [
-		'binding' => 'polymer\data\Binding'
+		'binding'  => 'polymer\data\Binding',
+		'response' => 'lithium\action\Response',
+		'media'    => 'lithium\net\http\Media',
 	];
 
 	public function url() {
@@ -67,7 +69,12 @@ class Endpoint extends \lithium\core\Object {
 			$config['params'] = [];
 		}
 
-		return $binding->apply($config['class'], $config['method'], $config['params']);
+		$media = $this->_instance('media');
+		$type = $media::negotiate($request);
+		$response = $this->_instance('response');
+		$data = $binding->apply($config['class'], $config['method'], $config['params']);
+
+		return $media::render($response, $data, compact('type'));
 	}
 
 	protected function _binding() {

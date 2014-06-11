@@ -64,7 +64,7 @@ class App extends \lithium\core\Object {
 	protected function _connect($endpoint = null) {
 		$callee = $endpoint ?: $this;
 		Router::connect($this->url($endpoint), [], function($request) use ($callee) {
-			return new Response($callee->respond($request));
+			return $callee->respond($request);
 		});
 	}
 

@@ -33,5 +33,13 @@ describe("binding", function() {
 			expect($model)->toReceive('::all')->with(compact('conditions'));
 			$binding->apply($model, 'all', [compact('conditions')]);
 		});
+
+		it("should return result as an array", function() {
+			$binding = new \polymer\extensions\adapter\data\binding\Li3();
+			$model = 'spec\polymer\mock\Li3Model';
+
+			$result = $binding->apply($model, 'all');
+			expect($result)->toBeA('array');
+		});
 	});
 });
