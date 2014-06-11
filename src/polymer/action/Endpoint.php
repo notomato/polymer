@@ -26,6 +26,7 @@ class Endpoint extends \lithium\core\Object {
 		'binding'  => 'polymer\data\Binding',
 		'response' => 'lithium\action\Response',
 		'media'    => 'lithium\net\http\Media',
+		'string'   => 'lithium\util\String'
 	];
 
 	public function url() {
@@ -65,16 +66,33 @@ class Endpoint extends \lithium\core\Object {
 
 		$config = $this->config('binding', true);
 
-		if (!isset($config['params'])) {
-			$config['params'] = [];
-		}
-
 		$media = $this->_instance('media');
 		$type = $media::negotiate($request);
 		$response = $this->_instance('response');
-		$data = $binding->apply($config['class'], $config['method'], $config['params']);
+
+		$params = isset($config['params']) ? $this->_params($request, $config['params']) : [];
+		$data = $binding->apply($config['class'], $config['method'], $params);
 
 		return $media::render($response, $data, compact('type'));
+	}
+
+	protected function _params($request, array $params) {
+		$string = $this->_instance('string');
+		$data = $request->params;
+
+		$replacer = function($value) use ($string, $data, &$replacer) {
+			if (is_array($value)) {
+				return array_map($replacer, $value);
+			}
+
+			if (!is_string($value)) {
+				return $value;
+			}
+
+			return $string::insert($value, $data);
+		};
+
+		return array_map($replacer, $params);
 	}
 
 	protected function _binding() {

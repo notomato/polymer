@@ -143,6 +143,33 @@ describe("endpoint", function() {
 			});
 		});
 
+		it("should substitute url parameters into binding", function() {
+			$model = 'spec\polymer\mock\Li3Model';
+
+			$endpoint = new Endpoint([
+				'name' => 'test.view',
+				'url'  => '{:id}',
+				'binding' => [
+					'adapter' => 'test',
+					'class'   => $model,
+					'method'  => 'first',
+					'params'  => [
+						'_id'     => '{:id}',
+						'deleted' => false
+					]
+				]
+			]);
+
+			$this->request->params = [
+				'id' => 100
+			];
+
+			$binding = Binding::adapter('test');
+
+			expect($binding)->toReceive('apply')->with($model, 'first', [ '_id' => '100', 'deleted' => false ]);
+			$endpoint->respond($this->request);
+		});
+
 		describe("media type", function() {
 			beforeEach(function() {
 				$binding = Binding::adapter('test');
