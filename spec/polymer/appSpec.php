@@ -39,10 +39,9 @@ describe("app", function() {
 		it("should return a response", function() {
 			$response = $this->app->respond();
 
-			expect($response)->toEqual([
-				'code' => 200,
-				'body' => "Hello World!"
-			]);
+			expect($response)->toBeAnInstanceOf('lithium\action\Response');
+			expect($response->status['code'])->toEqual(200);
+			expect($response->body())->toEqual("Hello World!");
 		});
 
 		it("should run", function() {

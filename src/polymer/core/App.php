@@ -2,12 +2,7 @@
 
 namespace polymer\core;
 
-use lithium\net\http\Router;
-use lithium\action\Request;
-use lithium\action\Response;
-use lithium\action\Dispatcher;
 use lithium\core\ConfigException;
-
 use polymer\action\Endpoint;
 
 class App extends \lithium\core\Object {
@@ -32,6 +27,13 @@ class App extends \lithium\core\Object {
 	 * Using a Namespace is not mandatory, but strongly recommended.
 	 */
 	protected $_namespace = '';
+
+	protected $_classes = [
+		'router'     => 'lithium\net\http\Router',
+		'dispatcher' => 'lithium\action\Dispatcher',
+		'request'    => 'lithium\action\Request',
+		'response'   => 'lithium\action\Response'
+	];
 
 	public function __construct(array $config = []) {
 		parent::__construct($config);
@@ -58,12 +60,12 @@ class App extends \lithium\core\Object {
 
 	/**
 	 * Connect the root URL or Endpoint URL using the li3 Router.
-	 *
-	 * @todo: Support li3-style DI
 	 */
 	protected function _connect($endpoint = null) {
 		$callee = $endpoint ?: $this;
-		Router::connect($this->url($endpoint), [], function($request) use ($callee) {
+		$router = $this->_instance('router');
+
+		$router::connect($this->url($endpoint), [], function($request) use ($callee) {
 			return $callee->respond($request);
 		});
 	}
@@ -72,18 +74,19 @@ class App extends \lithium\core\Object {
 	 * Return an array that can be used to construct an instance of `lithium\action\Response`
 	 */
 	public function respond($request = null) {
-		return [
-			'code' => 200,
+		return $this->_instance('response', [
+			'status' => 200,
 			'body' => "Hello World!"
-		];
+		]);
 	}
 
 	/**
 	 * Run the App by creating an instance of Request and running it through the Dispatcher
 	 */
 	public function run() {
-		$request = new Request();
-		return Dispatcher::run($request);
+		$request = $this->_instance('request');
+		$dispatcher = $this->_instance('dispatcher');
+		return $dispatcher::run($request);
 	}
 
 	/**
