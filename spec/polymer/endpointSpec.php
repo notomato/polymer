@@ -3,7 +3,6 @@
 namespace spec\polymer;
 
 use kahlan\plugin\Stub;
-use kahlan\plugin\Arg;
 use polymer\action\Endpoint;
 use polymer\data\Binding;
 use polymer\data\Decorator;
@@ -210,9 +209,9 @@ describe("endpoint", function() {
 				$binding = Binding::adapter('test');
 				Stub::on($binding)->method('apply')->andReturn(['foo' => 'bar']);
 
-				$app = Stub::create();
+				$this->app = Stub::create();
 				$this->endpoint = new Endpoint([
-					'app' => $app,
+					'app' => $this->app,
 					'name' => 'test.index',
 					'binding' => [
 						'adapter' => 'test',
@@ -225,13 +224,14 @@ describe("endpoint", function() {
 						]
 					]
 				]);
-				Stub::on($app)->method('traverse')->andReturn([$this->endpoint]);
+				Stub::on($this->app)->method('traverse')->andReturn([$this->endpoint]);
 			});
 
 			it("should apply binding result to decorators", function() {
 				$decorator = Decorator::adapter('test');
 				expect($decorator)->toReceive('apply')->with(['foo' => 'bar'], [
-					'adapter' => 'test'
+					'adapter' => 'test',
+					'app' => $this->app
 				]);
 
 				$this->endpoint->respond($this->request);

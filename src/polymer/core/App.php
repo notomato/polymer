@@ -120,10 +120,18 @@ class App extends \lithium\core\Object {
 	}
 
 	/**
-	 * Return a list of Endpoints that are direct children
+	 * Return an endpoint with $name or a list of all endpoints
 	 */
-	public function children() {
-		return $this->_children;
+	public function children($name = null) {
+		if (!$name) {
+			return $this->_children;
+		}
+
+		if (!isset($this->_children[$name])) {
+			throw new ConfigException("Endpoint `$name` is not defined");
+		}
+
+		return $this->_children[$name];
 	}
 
 	/**

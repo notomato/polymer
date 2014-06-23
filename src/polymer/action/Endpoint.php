@@ -138,7 +138,8 @@ class Endpoint extends \lithium\core\Object {
 		}
 
 		$defaults = [
-			'adapter' => 'default'
+			'adapter' => 'default',
+			'app' => $this->_app
 		];
 
 		$decorator = $this->_instance('decorator');

@@ -163,6 +163,17 @@ describe("app", function() {
 			expect($children['gizmos'])->toBe($gizmos);
 		});
 
+		it("should get endpoint by name", function() {
+			$widgets = $this->app->endpoint(['name' => 'widgets']);
+			expect($this->app->children('widgets'))->toBe($widgets);
+
+			$fn = function() {
+				$this->app->children('foo');
+			};
+
+			expect($fn)->toThrow(new \lithium\core\ConfigException("Endpoint `foo` is not defined"));
+		});
+
 		it("should traverse the inheritance chain", function() {
 			$widgets = $this->app->endpoint([
 				'name' => 'widgets',
