@@ -8,11 +8,14 @@ use lithium\action\DispatchException;
 class Endpoint extends \lithium\core\Object {
 
 	protected $_autoConfig = [
+		'app',
 		'name',
 		'url',
 		'binding',
-		'app'
+		'decorators'
 	];
+
+	protected $_app;
 
 	protected $_name;
 
@@ -20,13 +23,14 @@ class Endpoint extends \lithium\core\Object {
 
 	protected $_binding;
 
-	protected $_app;
+	protected $_decorators;
 
 	protected $_classes = [
-		'binding'  => 'polymer\data\Binding',
-		'response' => 'lithium\action\Response',
-		'media'    => 'lithium\net\http\Media',
-		'string'   => 'lithium\util\String'
+		'binding'   => 'polymer\data\Binding',
+		'decorator' => 'polymer\data\Decorator',
+		'response'  => 'lithium\action\Response',
+		'media'     => 'lithium\net\http\Media',
+		'string'    => 'lithium\util\String'
 	];
 
 	public function url() {
@@ -61,19 +65,26 @@ class Endpoint extends \lithium\core\Object {
 		}, $this->config($option));
 	}
 
-	public function respond($request = null) {
-		$binding = $this->_binding();
+	public function respond($request = null, array $options = []) {
+		$options += [
+			'render' => true
+		];
 
-		$config = $this->config('binding', true);
+		$data = $this->_binding($request);
+		$decorators = $this->_decorators($data);
+
+		$pipeline = compact('data', 'decorators');
+
+		if ($options['render'] !== true) {
+			return $pipeline;
+		}
 
 		$media = $this->_instance('media');
-		$type = $media::negotiate($request);
 		$response = $this->_instance('response');
 
-		$params = isset($config['params']) ? $this->_params($request, $config['params']) : [];
-		$data = $binding->apply($config['class'], $config['method'], $params);
+		$type = $media::negotiate($request);
 
-		return $media::render($response, $data, compact('type'));
+		return $media::render($response, $pipeline, compact('type'));
 	}
 
 	protected function _params($request, array $params) {
@@ -95,16 +106,55 @@ class Endpoint extends \lithium\core\Object {
 		return array_map($replacer, $params);
 	}
 
-	protected function _binding() {
+	/**
+	 * Get binding adapter and configuration, merging in data from $request
+	 */
+	protected function _binding($request) {
 		if (!$this->_binding) {
 			throw new DispatchException("Endpoint `{$this->_name}` cannot respond without a binding");
 		}
 
-		$binding = $this->_instance('binding');
-		$config = $this->config('binding', true);
-		$name = isset($config['adapter']) ? $config['adapter'] : 'default';
+		$defaults = [
+			'adapter' => 'default',
+			'params' => []
+		];
 
-		return $binding::adapter($name);
+		$binding = $this->_instance('binding');
+
+		$config = $this->config('binding', true) + $defaults;
+		$config['params'] = $this->_params($request, $config['params']);
+
+		$adapter = $binding::adapter($config['adapter']);
+
+		return $adapter->apply($config['class'], $config['method'], $config['params']);
+	}
+
+	/**
+	 * Get Decorator adapters and configuration, and apply $data
+	 */
+	protected function _decorators($data) {
+		if (!$this->_decorators) {
+			return [];
+		}
+
+		$defaults = [
+			'adapter' => 'default'
+		];
+
+		$decorator = $this->_instance('decorator');
+
+		$configs = $this->config('decorators');
+
+		return array_reduce($configs, function($decorators, $config) use ($data, $defaults, $decorator) {
+			$config += $defaults;
+
+			$name = $config['adapter'];
+			$adapter = $decorator::adapter($name);
+
+			$decorators[$name] = $adapter->apply($data, $config);
+
+			return $decorators;
+		}, []);
 	}
 }
 

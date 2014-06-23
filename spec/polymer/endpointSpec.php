@@ -3,8 +3,10 @@
 namespace spec\polymer;
 
 use kahlan\plugin\Stub;
+use kahlan\plugin\Arg;
 use polymer\action\Endpoint;
 use polymer\data\Binding;
+use polymer\data\Decorator;
 use lithium\action\Request;
 
 describe("endpoint", function() {
@@ -52,6 +54,12 @@ describe("endpoint", function() {
 	describe("response", function() {
 		beforeEach(function() {
 			Binding::config([
+				'test' => [
+					'adapter' => Stub::create()
+				]
+			]);
+
+			Decorator::config([
 				'test' => [
 					'adapter' => Stub::create()
 				]
@@ -193,7 +201,54 @@ describe("endpoint", function() {
 			it("should negotiate encoding by Accept header", function() {
 				$response = $this->endpoint->respond($this->request);
 				expect($response->headers('Content-Type'))->toEqual('application/json; charset=UTF-8');
-				expect($response->body())->toEqual('{"foo":"bar"}');
+				expect($response->body())->toEqual('{"data":{"foo":"bar"},"decorators":[]}');
+			});
+		});
+
+		describe("decorators", function() {
+			beforeEach(function() {
+				$binding = Binding::adapter('test');
+				Stub::on($binding)->method('apply')->andReturn(['foo' => 'bar']);
+
+				$app = Stub::create();
+				$this->endpoint = new Endpoint([
+					'app' => $app,
+					'name' => 'test.index',
+					'binding' => [
+						'adapter' => 'test',
+						'class'   => 'spec\polymer\mock\Li3Model',
+						'method'  => 'first'
+					],
+					'decorators' => [
+						[
+							'adapter' => 'test'
+						]
+					]
+				]);
+				Stub::on($app)->method('traverse')->andReturn([$this->endpoint]);
+			});
+
+			it("should apply binding result to decorators", function() {
+				$decorator = Decorator::adapter('test');
+				expect($decorator)->toReceive('apply')->with(['foo' => 'bar'], [
+					'adapter' => 'test'
+				]);
+
+				$this->endpoint->respond($this->request);
+			});
+
+			it("should apply to data before encoding", function() {
+				$decorator = Decorator::adapter('test');
+				Stub::on($decorator)->method('apply')->andReturn(['self' => 'http://foo/bar']);
+
+				$result = $this->endpoint->respond($this->request, ['render' => false]);
+
+				expect($result)->toEqual([
+					'data' => ['foo' => 'bar'],
+					'decorators' => [
+						'test' => ['self' => 'http://foo/bar']
+					]
+				]);
 			});
 		});
 	});
